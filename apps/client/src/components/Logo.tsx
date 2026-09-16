@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
 
 interface LogoProps {
+  size?: number;
   width?: number;
   height?: number;
   className?: string;
@@ -12,21 +13,27 @@ interface LogoProps {
  * baked into the logo artwork.
  */
 export function Logo({
-  width = 80,
-  height = 40,
+  size,
+  width,
+  height,
   className,
 }: LogoProps) {
+  // If width/height are provided, use them.
+  // Otherwise fall back to the old `size` behavior.
+  const logoWidth = width ?? size ?? 32;
+  const logoHeight = height ?? size ?? 32;
+
   return (
     <img
       src="/logo.png"
       alt="Fluxroom"
-      width={width}
-      height={height}
+      width={logoWidth}
+      height={logoHeight}
       draggable={false}
       className={cn('rounded-lg object-contain', className)}
       style={{
-        width: `${width}px`,
-        height: `${height}px`,
+        width: `${logoWidth}px`,
+        height: `${logoHeight}px`,
       }}
     />
   );
