@@ -85,7 +85,14 @@ export function Home() {
       <section className="relative overflow-hidden border-t py-20 sm:py-24">
         <div className="pointer-events-none absolute left-1/2 top-1/2 size-80 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/20 glow-blob sm:size-[32rem]" />
         <Reveal className="relative mx-auto max-w-2xl px-5 text-center sm:px-6">
-          <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-5xl">Ready when you are</h2>
+          <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-5xl">Share files and text
+without the middleman</h2> <br />
+
+          <p className="text-xs text-muted-foreground">Drop a file, paste a snippet, send a message — straight from your device to theirs. Nothing is uploaded, nothing is stored, nothing to install.
+
+</p>
+
+
           <Button size="lg" className="mt-8 bg-gradient-brand glow-primary" onClick={() => navigate('/setup')}>
             Get Started
             <ArrowRight className="size-4" />
