@@ -26,7 +26,7 @@ export function JoiningLoader({ roomId, avatarId, attempt, onCancel }: JoiningLo
           animate={{ scale: [1, 1.06, 1] }}
           transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
         >
-          <Logo size={64} />
+          <Logo height={80} />
         </motion.div>
       </div>
 

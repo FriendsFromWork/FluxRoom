@@ -25,7 +25,7 @@ function RoomProblem({ title, message }: { title: string; message: string }) {
   return (
     <div className="flex min-h-dvh items-center justify-center bg-background px-5">
       <div role="alert" className="w-full max-w-sm rounded-3xl border bg-card/60 p-6 text-center sm:p-8">
-        <Logo size={36} className="mx-auto" />
+        <Logo height={48} className="mx-auto" />
         <h1 className="mt-5 font-display text-xl font-semibold">{title}</h1>
         <p className="mt-2 text-sm text-muted-foreground">{message}</p>
         <Button className="mt-6 w-full" onClick={() => navigate('/setup')}>
@@ -56,7 +56,7 @@ function JoinPrompt({
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         className="relative w-full max-w-md rounded-3xl border bg-card/60 p-6 backdrop-blur sm:p-8"
       >
-        <Logo size={32} />
+        <Logo height={40} />
         <span className="tagline mt-5 block text-[11px] text-primary">You've been invited</span>
         <h1 className="mt-3 font-display text-2xl font-semibold tracking-tight sm:text-3xl">
           Join <span className="text-gradient-brand">{roomId}</span>
@@ -170,7 +170,7 @@ export function Room() {
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-background">
       <header className="z-20 flex shrink-0 items-center gap-3 border-b bg-card/50 px-4 py-3 backdrop-blur-xl sm:px-5">
-        <Logo size={30} />
+        <Logo height={38} />
 
         <div className="min-w-0 flex-1">
           <p className="truncate font-display text-sm font-semibold leading-tight">{roomId}</p>

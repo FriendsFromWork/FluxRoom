@@ -3,6 +3,10 @@
   "private": true,
   "version": "1.0.0",
   "description": "Real-time peer-to-peer rooms for files, text, code, and chat.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FriendsFromWork/FluxRoom.git"
+  },
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -13,7 +17,8 @@
     "build:shared": "npm run build --workspace=packages/shared",
     "build:server": "npm run build --workspace=apps/server",
     "build:client": "npm run build --workspace=apps/client",
-    "test": "vitest run"
+    "test": "vitest run",
+    "lint": "npm run lint --workspace=packages/shared && npm run lint --workspace=apps/server && npm run lint --workspace=apps/client"
   },
   "engines": {
     "node": ">=18"

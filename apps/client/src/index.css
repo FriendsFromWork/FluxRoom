@@ -148,31 +148,6 @@
   .glow-blob {
     filter: blur(90px);
   }
-  /* Thin vertical rules down the page gutters — the reference design's signature framing. */
-  .gutter-lines::before,
-  .gutter-lines::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 1px;
-    background: var(--border);
-    pointer-events: none;
-  }
-  .gutter-lines::before {
-    left: 1.25rem;
-  }
-  .gutter-lines::after {
-    right: 1.25rem;
-  }
-  @media (min-width: 1280px) {
-    .gutter-lines::before {
-      left: 2.5rem;
-    }
-    .gutter-lines::after {
-      right: 2.5rem;
-    }
-  }
   .font-display {
     font-family: var(--font-display);
   }

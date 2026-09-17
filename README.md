@@ -7,6 +7,9 @@
   Share files, text, code snippets, and chat — peer-to-peer, in real time.<br/>
   No accounts. No database. Nothing ever stored on any server.
 </p>
+<p align="center">
+  <a href="https://github.com/FriendsFromWork/FluxRoom">GitHub repository</a>
+</p>
 
 ## What is Fluxroom?
 

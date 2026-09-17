@@ -22,6 +22,8 @@ const STALE_CHECK_INTERVAL_MS = 20_000;
 const STALE_AFTER_MS = 90_000;
 /** Full-mesh WebRTC degrades quickly past a handful of peers, so rooms are capped. */
 export const MAX_PEERS_PER_ROOM = 10;
+/** Bounds total server memory: each room is cheap, but nothing else limits how many can exist at once. */
+export const MAX_ROOMS = 5_000;
 /** JSON signaling messages are small (SDP/ICE); anything bigger is not a legitimate client. */
 const MAX_JSON_MESSAGE_BYTES = 64 * 1024;
 /**
@@ -48,6 +50,7 @@ export interface SignalingServerOptions {
   staleCheckIntervalMs?: number;
   staleAfterMs?: number;
   maxPeersPerRoom?: number;
+  maxRooms?: number;
   /** Supplies TURN relays for `GET /ice-servers`; defaults to none (browsers fall back to STUN only). */
   iceServers?: IceServerProvider;
   /**
@@ -74,7 +77,7 @@ export function createSignalingServer(options: SignalingServerOptions = {}): Sig
 
     if (req.method === 'GET' && path === '/ice-servers') {
       const origin = req.headers.origin;
-      if (allowedOrigins && origin && !allowedOrigins.includes(origin)) {
+      if (allowedOrigins && (!origin || !allowedOrigins.includes(origin))) {
         res.writeHead(403);
         res.end();
         return;
@@ -114,6 +117,7 @@ export function createSignalingServer(options: SignalingServerOptions = {}): Sig
   });
 
   const maxPeersPerRoom = options.maxPeersPerRoom ?? MAX_PEERS_PER_ROOM;
+  const maxRooms = options.maxRooms ?? MAX_ROOMS;
   const relayEnabled = options.relay ?? true;
   const wss = new WebSocketServer({ noServer: true, maxPayload: MAX_FRAME_BYTES });
 
@@ -198,7 +202,11 @@ export function createSignalingServer(options: SignalingServerOptions = {}): Sig
           return;
         }
 
-        const room = registry.getOrCreate(message.room);
+        const room = registry.getOrCreate(message.room, maxRooms);
+        if (!room) {
+          send(ws, { type: 'error', message: 'Too many rooms are active right now — try again shortly.' });
+          return;
+        }
         const name = room.uniqueName(message.name);
         const id = randomUUID();
 

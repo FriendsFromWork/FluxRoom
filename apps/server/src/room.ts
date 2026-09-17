@@ -45,9 +45,11 @@ export class Room {
 export class RoomRegistry {
   private readonly rooms = new Map<string, Room>();
 
-  getOrCreate(name: string): Room {
+  /** Returns null instead of creating a new room once `maxRooms` distinct rooms already exist, to bound server memory. */
+  getOrCreate(name: string, maxRooms: number = Infinity): Room | null {
     let room = this.rooms.get(name);
     if (!room) {
+      if (this.rooms.size >= maxRooms) return null;
       room = new Room(name);
       this.rooms.set(name, room);
     }

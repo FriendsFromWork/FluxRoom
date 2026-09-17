@@ -66,7 +66,7 @@ export function Setup() {
           onClick={() => navigate('/')}
           className="flex items-center gap-2.5 transition-opacity hover:opacity-80"
         >
-          <Logo size={28} />
+          <Logo height={36} />
           <span className="font-display text-base font-semibold tracking-tight">FluxRoom</span>
         </button>
         <ThemeToggle />

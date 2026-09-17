@@ -1,40 +1,20 @@
 import { cn } from '@/lib/utils';
 
 interface LogoProps {
-  size?: number;
-  width?: number;
+  /** Rendered height in px; width follows automatically from the image's real aspect ratio. */
   height?: number;
   className?: string;
 }
 
-/**
- * Fluxroom logo:
- * People + chat/code/file icons with the FluxRoom wordmark
- * baked into the logo artwork.
- */
-export function Logo({
-  size,
-  width,
-  height,
-  className,
-}: LogoProps) {
-  // If width/height are provided, use them.
-  // Otherwise fall back to the old `size` behavior.
-  const logoWidth = width ?? size ?? 32;
-  const logoHeight = height ?? size ?? 32;
-
+/** FluxRoom mark: people + chat/code/file icons, orbiting. */
+export function Logo({ height = 40, className }: LogoProps) {
   return (
     <img
       src="/logo.png"
-      alt="Fluxroom"
-      width={logoWidth}
-      height={logoHeight}
+      alt="FluxRoom"
       draggable={false}
-      className={cn('rounded-lg object-contain', className)}
-      style={{
-        width: `${logoWidth}px`,
-        height: `${logoHeight}px`,
-      }}
+      className={cn('w-auto object-contain', className)}
+      style={{ height }}
     />
   );
 }

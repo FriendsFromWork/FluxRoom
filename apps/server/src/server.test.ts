@@ -269,6 +269,16 @@ describe('signaling server: GET /ice-servers', () => {
     const res = await fetch(httpUrl('/ice-servers?t=1'));
     expect(res.status).toBe(200);
   });
+
+  it('refuses a request with no Origin header when an allow-list is configured, instead of treating it as allowed', async () => {
+    await server.close();
+    await startServer({ allowedOrigins: ['https://app.example.com'], iceServers: async () => [turn] });
+
+    // A plain fetch() from Node sends no Origin header — this must not bypass the allow-list
+    // the way a request that merely fails the includes() check would be expected to.
+    const res = await fetch(httpUrl('/ice-servers'));
+    expect(res.status).toBe(403);
+  });
 });
 
 describe('signaling server: limits', () => {
@@ -289,6 +299,33 @@ describe('signaling server: limits', () => {
     expect(err).toMatchObject({ type: 'error' });
     expect(server.registry.get('room-a')?.peers.size).toBe(2);
     expect(a.messages.filter((m) => m.type === 'peer-joined')).toHaveLength(1);
+
+    a.ws.close();
+    b.ws.close();
+    c.ws.close();
+  });
+
+  it('refuses to create a new room once maxRooms is reached, but still allows joining an existing one', async () => {
+    await server.close();
+    await startServer({ maxRooms: 1 });
+
+    const a = await connect();
+    join(a, 'room-a', 'A');
+    await waitFor(a, (m) => m.type === 'room-state');
+    expect(server.registry.roomCount).toBe(1);
+
+    // A second peer joining the SAME room must still work — the cap is on distinct rooms, not peers.
+    const b = await connect();
+    join(b, 'room-a', 'B');
+    await waitFor(b, (m) => m.type === 'room-state');
+    expect(server.registry.get('room-a')?.peers.size).toBe(2);
+
+    // A brand-new room name is rejected while at the cap.
+    const c = await connect();
+    join(c, 'room-b', 'C');
+    const err = await waitFor(c, (m) => m.type === 'error');
+    expect(err).toMatchObject({ type: 'error' });
+    expect(server.registry.roomCount).toBe(1);
 
     a.ws.close();
     b.ws.close();
