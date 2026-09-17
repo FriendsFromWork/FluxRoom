@@ -4,11 +4,19 @@ import type { FeedItem, RoomPeer } from '@/types/feed';
 
 const SIGNALING_URL = import.meta.env.VITE_SIGNALING_URL ?? 'ws://localhost:3001';
 
-export type RoomStatus = 'idle' | 'connecting' | 'connected' | 'error';
+/**
+ * - connecting: first join in progress (or still retrying before it ever succeeded)
+ * - reconnecting: was in the room, lost the signaling server, retrying
+ * - error: unrecoverable (e.g. room full) — no more retries
+ */
+export type RoomStatus = 'idle' | 'connecting' | 'connected' | 'reconnecting' | 'error';
 
 interface RoomState {
   status: RoomStatus;
   errorMessage: string | null;
+  connectAttempt: number;
+  /** The server relays traffic for peers that can't connect directly. */
+  relay: boolean;
   selfId: string | null;
   selfName: string;
   selfAvatarId: number;
@@ -26,9 +34,16 @@ interface RoomState {
 
 let connection: RoomConnection | null = null;
 
-export const useRoomStore = create<RoomState>((set, get) => ({
+/** Whether messages sent now will reach this peer (directly, or through the relay). */
+export function canReachPeer(peer: RoomPeer, relay: boolean): boolean {
+  return peer.status === 'connected' || peer.status === 'relayed' || (relay && peer.status === 'connecting');
+}
+
+export const useRoomStore = create<RoomState>((set) => ({
   status: 'idle',
   errorMessage: null,
+  connectAttempt: 0,
+  relay: false,
   selfId: null,
   selfName: '',
   selfAvatarId: 1,
@@ -38,11 +53,15 @@ export const useRoomStore = create<RoomState>((set, get) => ({
 
   joinRoom: (name, room, avatarId) => {
     connection?.disconnect();
-    connection = new RoomConnection();
+    const conn = new RoomConnection();
+    connection = conn;
 
     set({
       status: 'connecting',
       errorMessage: null,
+      connectAttempt: 0,
+      relay: false,
+      selfId: null,
       selfName: name,
       selfAvatarId: avatarId,
       roomName: room,
@@ -50,49 +69,51 @@ export const useRoomStore = create<RoomState>((set, get) => ({
       feed: [],
     });
 
-    connection.on('self-joined', ({ selfId, selfName, roomName }) => {
-      set({ status: 'connected', selfId, selfName, roomName });
+    conn.on('self-joined', ({ selfId, selfName, roomName, relay }) => {
+      set({ status: 'connected', errorMessage: null, connectAttempt: 0, relay, selfId, selfName, roomName });
     });
 
-    connection.on('peer-update', (peer) => {
+    conn.on('reconnecting', ({ attempt }) => {
+      set((state) => ({
+        status: state.selfId ? 'reconnecting' : 'connecting',
+        connectAttempt: attempt,
+      }));
+    });
+
+    conn.on('peer-update', (peer) => {
       set((state) => ({ peers: { ...state.peers, [peer.id]: peer } }));
     });
 
-    connection.on('peer-removed', ({ id }) => {
+    conn.on('peer-removed', ({ id }) => {
       set((state) => {
+        if (!(id in state.peers)) return state;
         const peers = { ...state.peers };
         delete peers[id];
         return { peers };
       });
     });
 
-    connection.on('feed-item', (item) => {
+    conn.on('feed-item', (item) => {
       set((state) => ({ feed: [...state.feed, item] }));
     });
 
-    connection.on('feed-item-update', (patch) => {
+    conn.on('feed-item-update', (patch) => {
       set((state) => ({
         feed: state.feed.map((item) => (item.id === patch.id ? ({ ...item, ...patch } as FeedItem) : item)),
       }));
     });
 
-    connection.on('error', ({ message }) => {
-      set({ status: 'error', errorMessage: message });
+    conn.on('error', ({ message }) => {
+      set({ status: 'error', errorMessage: message, peers: {} });
     });
 
-    connection.on('socket-closed', () => {
-      if (get().status !== 'error') {
-        set({ status: 'error', errorMessage: 'Disconnected from the signaling server.' });
-      }
-    });
-
-    connection.connect(SIGNALING_URL, room, name, avatarId);
+    conn.connect(SIGNALING_URL, room, name, avatarId);
   },
 
   leaveRoom: () => {
     connection?.disconnect();
     connection = null;
-    set({ status: 'idle', selfId: null, peers: {}, feed: [], roomName: '' });
+    set({ status: 'idle', errorMessage: null, connectAttempt: 0, selfId: null, peers: {}, feed: [], roomName: '' });
   },
 
   sendChat: (text) => connection?.sendChat(text),

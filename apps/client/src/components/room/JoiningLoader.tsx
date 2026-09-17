@@ -1,10 +1,19 @@
 import { motion } from 'motion/react';
 import { Logo } from '@/components/Logo';
 import { PixelAvatar } from '@/components/PixelAvatar';
+import { Button } from '@/components/ui/button';
 
-export function JoiningLoader({ roomId, avatarId }: { roomId: string; avatarId: number }) {
+interface JoiningLoaderProps {
+  roomId: string;
+  avatarId: number;
+  /** How many connection attempts have failed so far; the first try is 0. */
+  attempt: number;
+  onCancel: () => void;
+}
+
+export function JoiningLoader({ roomId, avatarId, attempt, onCancel }: JoiningLoaderProps) {
   return (
-    <div className="relative flex min-h-svh flex-col items-center justify-center gap-6 overflow-hidden bg-background px-4">
+    <div className="relative flex min-h-dvh flex-col items-center justify-center gap-6 overflow-hidden bg-background px-4">
       <div className="pointer-events-none absolute -left-40 -top-40 size-96 rounded-full bg-primary/25 glow-blob" />
       <div className="pointer-events-none absolute -right-40 bottom-0 size-96 rounded-full bg-[oklch(0.62_0.24_300)]/20 glow-blob" />
       <div className="relative flex items-center justify-center">
@@ -25,10 +34,10 @@ export function JoiningLoader({ roomId, avatarId }: { roomId: string; avatarId: 
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
-        className="flex flex-col items-center gap-3"
+        className="relative flex max-w-sm flex-col items-center gap-3 text-center"
       >
         <PixelAvatar avatarId={avatarId} size={44} />
-        <p className="text-sm text-muted-foreground">
+        <p className="break-all text-sm text-muted-foreground">
           Joining <span className="font-medium text-foreground">{roomId}</span>
           <motion.span
             aria-hidden
@@ -38,7 +47,16 @@ export function JoiningLoader({ roomId, avatarId }: { roomId: string; avatarId: 
             …
           </motion.span>
         </p>
+        {attempt > 0 && (
+          <p role="status" className="text-xs text-muted-foreground">
+            The server is taking a moment to respond — it may be waking up. Still trying (attempt {attempt + 1})…
+          </p>
+        )}
       </motion.div>
+
+      <Button variant="ghost" size="sm" className="relative" onClick={onCancel}>
+        Cancel
+      </Button>
     </div>
   );
 }

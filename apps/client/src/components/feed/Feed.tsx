@@ -25,10 +25,18 @@ export function Feed({ items }: { items: FeedItem[] }) {
   const wasNearBottomRef = useRef(true);
 
   useEffect(() => {
-    // Skip the jump if the user has scrolled up to read earlier messages —
-    // only follow the feed automatically while already parked near the bottom.
-    if (!wasNearBottomRef.current) return;
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    // Follow the feed while parked near the bottom, and always after sending something
+    // yourself — but don't yank someone away from older messages they scrolled up to read.
+    const last = items[items.length - 1];
+    const sentBySelf = last !== undefined && last.kind !== 'system' && last.self;
+    if (!wasNearBottomRef.current && !sentBySelf) return;
+    const viewport = viewportRef.current;
+    if (viewport) {
+      viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
+    } else {
+      bottomRef.current?.scrollIntoView({ block: 'end' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items.length]);
 
   useEffect(() => {

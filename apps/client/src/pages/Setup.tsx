@@ -9,7 +9,8 @@ import { Logo } from '@/components/Logo';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { AvatarPicker } from '@/components/AvatarPicker';
 import { PixelAvatar } from '@/components/PixelAvatar';
-import { generateRoomCode } from '@/lib/roomCode';
+import { generateRoomCode, normalizeRoomCode } from '@/lib/roomCode';
+import { prefersTouchInput } from '@/lib/device';
 
 const NAME_STORAGE_KEY = 'fluxroom-name';
 const AVATAR_STORAGE_KEY = 'fluxroom-avatar';
@@ -46,10 +47,12 @@ export function Setup() {
     navigate(`/r/${generateRoomCode()}`);
   };
 
+  const normalizedJoinCode = normalizeRoomCode(joinCode);
+
   const handleJoin = () => {
-    if (!joinCode.trim()) return;
+    if (!normalizedJoinCode) return;
     persist();
-    navigate(`/r/${joinCode.trim().toLowerCase()}`);
+    navigate(`/r/${normalizedJoinCode}`);
   };
 
   return (
@@ -114,7 +117,7 @@ export function Setup() {
                         onChange={(e) => setName(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleContinue()}
                         maxLength={40}
-                        autoFocus
+                        autoFocus={!prefersTouchInput()}
                         className="h-12 rounded-xl text-base"
                       />
                     </div>
@@ -174,17 +177,22 @@ export function Setup() {
 
                     <div className="flex flex-col gap-2.5 sm:flex-row">
                       <Input
-                        placeholder="room-code"
+                        placeholder="room code or invite link"
+                        aria-label="Room code or invite link"
                         value={joinCode}
                         onChange={(e) => setJoinCode(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        enterKeyHint="go"
                         className="h-12 rounded-xl text-base"
                       />
                       <Button
                         size="lg"
                         variant="secondary"
                         onClick={handleJoin}
-                        disabled={!joinCode.trim()}
+                        disabled={!normalizedJoinCode}
                         className="shrink-0"
                       >
                         <LogIn className="size-4" />

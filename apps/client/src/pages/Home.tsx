@@ -35,7 +35,7 @@ const FEATURES = [
   {
     icon: ShieldCheck,
     title: 'Truly private',
-    description: 'Everything moves peer-to-peer over WebRTC. The server only introduces peers — it never sees your data.',
+    description: 'Peer-to-peer over WebRTC whenever possible, with a store-nothing relay for networks that block it. No accounts, no database.',
   },
 ];
 
@@ -243,12 +243,14 @@ export function Home() {
               </div>
               <span className="tagline text-[11px] text-primary">Privacy</span>
               <h2 className="mt-4 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-                Your data never touches a server
+                Nothing is ever stored
               </h2>
               <p className="mx-auto mt-5 max-w-xl leading-relaxed text-muted-foreground">
-                FluxRoom's server exists only to introduce two browsers to each other. Once connected,
-                every file, message, and snippet travels directly between devices — encrypted in transit
-                by WebRTC. There is no database, no account, and nothing left behind when you close the tab.
+                Whenever your networks allow it, every file, message, and snippet travels directly between
+                devices, encrypted in transit by WebRTC. When they don't (common between different mobile
+                networks), FluxRoom's server relays it in memory so it still arrives, and you'll see
+                "Relayed via server". Either way there is no database, no account, and nothing left behind when
+                you close the tab.
               </p>
 
               <div className="mt-10 grid gap-4 sm:grid-cols-3">

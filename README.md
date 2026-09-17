@@ -13,11 +13,12 @@
 Fluxroom is a real-time room for a small group of people to instantly share
 things with each other — files, pasted text, code snippets, and chat
 messages — all in one unified live feed with avatars, like a lightweight
-private group chat. Everything transfers **directly between browsers over
-WebRTC**; the server only helps peers find each other and never sees the
-content of what's shared. When everyone leaves, the room and everything in
-it disappears — there's no database, no accounts, and nothing is ever
-persisted anywhere.
+private group chat. Whenever the network allows it, everything transfers
+**directly between browsers over WebRTC**. When two devices can't reach each
+other directly (typically phones on different mobile networks), the room's own
+server relays their traffic in memory instead, so it still works everywhere.
+When everyone leaves, the room and everything in it disappears — there's no
+database, no accounts, and nothing is ever persisted anywhere.
 
 ## Features
 
@@ -52,13 +53,19 @@ persisted anywhere.
 ## How it works
 
 - A tiny **signaling server** (Node + TypeScript + `ws`) holds rooms in
-  memory and only relays WebRTC handshake messages (SDP offers/answers, ICE
-  candidates) between peers in the same room. It never sees chat text,
-  files, or code — those never touch the server at all.
-- Every peer in a room opens a direct `RTCDataChannel` to every other peer
-  (full mesh). Chat, pasted text, code snippets, and chunked file transfers
-  all flow over these data channels, with progress computed locally from
-  bytes sent/received.
+  memory and passes WebRTC handshake messages (SDP offers/answers, ICE
+  candidates) between peers in the same room.
+- Every peer in a room tries to open a direct `RTCDataChannel` to every other
+  peer (full mesh). Chat, pasted text, code snippets, and chunked file
+  transfers flow over these data channels, with progress computed locally.
+- **Relay fallback:** until a direct channel opens — or if it never can, as
+  between two different mobile networks (carrier-grade NAT) — the same traffic
+  goes through the signaling server's WebSocket instead. The server forwards
+  it in memory, only between members of the same room, and never stores it.
+  Relayed file transfers use acknowledgement-based flow control, so the server
+  holds at most ~1 MB per transfer. The people list shows who is "Direct" and
+  who is "Relayed via server". A direct link that opens later takes over
+  automatically.
 - Rooms and messages exist only in memory (server) and in the browser tab
   (client) — closing the tab or restarting the server clears everything.
 

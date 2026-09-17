@@ -75,11 +75,16 @@ output).
 | Variable | App | Default | Purpose |
 |---|---|---|---|
 | `VITE_SIGNALING_URL` | client | `ws://localhost:3001` | WebSocket URL of the signaling server |
-| `VITE_TURN_URL` | client | unset | Optional TURN server URL for NAT traversal reliability |
-| `VITE_TURN_USERNAME` | client | unset | TURN credential username |
-| `VITE_TURN_CREDENTIAL` | client | unset | TURN credential password |
+| `VITE_TURN_URL` | client | unset | Optional build-time TURN relay (comma-separated URLs). Prefer the server-side variables below |
+| `VITE_TURN_USERNAME` | client | unset | Username for `VITE_TURN_URL` |
+| `VITE_TURN_CREDENTIAL` | client | unset | Credential for `VITE_TURN_URL` |
 | `PORT` | server | `3001` | Port the signaling server listens on |
-| `ORIGIN` | server | unset (allow all) | Comma-separated allow-list of origins permitted to open a WebSocket connection |
+| `ORIGIN` | server | unset (allow all) | Comma-separated allow-list of origins permitted to connect and to fetch TURN credentials |
+| `RELAY_ENABLED` | server | `true` | Relay traffic through this server for peers that can't connect directly. Set `false` to disable |
+| `TURN_CREDENTIALS_URL` | server | unset | Optional. HTTPS URL returning a TURN server list (not needed; the built-in relay covers this) |
+| `TURN_URLS` | server | unset | Static TURN relay, comma-separated URLs |
+| `TURN_USERNAME` | server | unset | Username for `TURN_URLS` |
+| `TURN_CREDENTIAL` | server | unset | Credential for `TURN_URLS` |
 
 ## 6. Deploy the signaling server → Render
 
@@ -129,18 +134,30 @@ with a retry-friendly error if the wake-up takes too long.
 - [ ] Close one tab and confirm the other sees "left the room" and the peer
       list updates.
 
-## Optional: TURN server for better reliability
+## Different networks: the built-in relay
 
-STUN (Google's free public servers, used by default) is enough for most
-networks. If some users are behind strict/symmetric NATs and can't connect
-to each other, add a free TURN allowance — e.g.
-[Metered.ca's free tier](https://www.metered.ca/tools/openrelay/) (~50GB/mo
-free) — via the client env vars:
+Peers connect directly when they can. Two devices on the **same** Wi-Fi, or two
+tabs on one machine, always can. Phones on **different mobile carriers** usually
+cannot: carrier-grade NAT blocks direct connections.
 
-```
-VITE_TURN_URL=turn:...
-VITE_TURN_USERNAME=...
-VITE_TURN_CREDENTIAL=...
-```
+For those peers, the signaling server itself relays chat and files over the
+WebSocket they already have open. It's **on by default** and needs no extra
+service or account: it's just your existing Render server.
 
-Leave these unset to run STUN-only (the default, and still free).
+- The people list shows **Direct** or **Relayed via server** for each person.
+- Relayed traffic passes through server memory only, between members of one
+  room, and is never stored. File transfers use acknowledgement-based flow
+  control, so the server holds at most ~1 MB per transfer.
+- If a direct route appears later, it takes over automatically.
+- Relayed data counts toward your Render plan's outbound bandwidth. Check the
+  usage in the Render dashboard if people share large files often.
+
+To turn the relay off (direct-only), set `RELAY_ENABLED=false` on Render. Peers
+that can't connect directly will then show "Can't connect".
+
+### Optional: a TURN server instead
+
+If you ever prefer a dedicated TURN relay (e.g. to keep relayed traffic
+encrypted end-to-end by WebRTC), set `TURN_CREDENTIALS_URL`, or
+`TURN_URLS` / `TURN_USERNAME` / `TURN_CREDENTIAL`, on the server. Browsers pick
+it up from `GET /ice-servers`. It's not required.

@@ -8,7 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CODE_LANGUAGES } from '@/lib/codeLanguageList';
 import { cn } from '@/lib/utils';
-import { useRoomStore } from '@/store/useRoomStore';
+import { prefersTouchInput } from '@/lib/device';
+import { canReachPeer, useRoomStore } from '@/store/useRoomStore';
 
 /** Below this length, a plain send renders as an inline chat bubble; above it, as a "Text" card. */
 const CHAT_INLINE_THRESHOLD = 300;
@@ -18,12 +19,15 @@ export function Composer() {
   const [isCode, setIsCode] = useState(false);
   const [lang, setLang] = useState('javascript');
   const [focused, setFocused] = useState(false);
+  // On touch keyboards Enter inserts a newline and the send button sends, as in native messaging apps.
+  const [enterSends] = useState(() => !prefersTouchInput());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const sendChat = useRoomStore((s) => s.sendChat);
   const sendText = useRoomStore((s) => s.sendText);
   const sendCode = useRoomStore((s) => s.sendCode);
   const sendFile = useRoomStore((s) => s.sendFile);
+  const hasConnectedPeer = useRoomStore((s) => Object.values(s.peers).some((p) => canReachPeer(p, s.relay)));
 
   const handleSend = () => {
     const trimmed = content.trim();
@@ -46,8 +50,13 @@ export function Composer() {
 
   const handleFilePick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) sendFile(file);
     e.target.value = '';
+    if (!file) return;
+    if (!hasConnectedPeer) {
+      toast.error("Nobody is connected yet — files are sent live, so wait until someone's in the room.");
+      return;
+    }
+    sendFile(file);
   };
 
   const showCount = isCode || content.length > CHAT_INLINE_THRESHOLD;
@@ -122,11 +131,12 @@ export function Composer() {
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey && !isCode) {
+                if (e.key === 'Enter' && !e.shiftKey && !isCode && enterSends && !e.nativeEvent.isComposing) {
                   e.preventDefault();
                   handleSend();
                 }
               }}
+              enterKeyHint={enterSends && !isCode ? 'send' : 'enter'}
               rows={1}
               className={cn(
                 'max-h-40 min-h-10 resize-none overflow-y-auto border-0 bg-transparent py-2.5 shadow-none focus-visible:ring-0 dark:bg-transparent',
@@ -150,7 +160,7 @@ export function Composer() {
 
         <div className="mt-1.5 flex items-center justify-between px-3">
           <span className="text-[10px] text-muted-foreground">
-            {isCode ? 'Shift+Enter for newline' : 'Enter to send · Shift+Enter for newline'}
+            {!enterSends ? 'Tap send to share' : isCode ? 'Code mode · use the send button' : 'Enter to send · Shift+Enter for newline'}
           </span>
           {showCount && (
             <span className={cn('text-[10px] tabular-nums', nearLimit ? 'text-destructive' : 'text-muted-foreground')}>

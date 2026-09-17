@@ -1,5 +1,44 @@
 import { describe, it, expect } from 'vitest';
-import { ClientToServerSchema, ServerToClientSchema, PeerInfoSchema, AvatarIdSchema } from './signaling.js';
+import {
+  ClientToServerSchema,
+  ServerToClientSchema,
+  PeerInfoSchema,
+  AvatarIdSchema,
+  parseIceServers,
+} from './signaling.js';
+
+describe('parseIceServers', () => {
+  const turn = { urls: 'turn:relay.example.com:443?transport=tcp', username: 'u', credential: 'c' };
+
+  it('accepts a bare array (TURN provider shape)', () => {
+    expect(parseIceServers([{ urls: 'stun:stun.example.com' }, turn])).toEqual([
+      { urls: 'stun:stun.example.com' },
+      turn,
+    ]);
+  });
+
+  it('accepts an { iceServers } object and array-valued urls', () => {
+    const multi = { urls: ['turn:a:80', 'turns:a:443'], username: 'u', credential: 'c' };
+    expect(parseIceServers({ iceServers: [multi] })).toEqual([multi]);
+  });
+
+  it('drops malformed entries but keeps valid ones', () => {
+    expect(parseIceServers([{ nope: true }, { urls: '' }, turn])).toEqual([turn]);
+  });
+
+  it('returns null for unusable input', () => {
+    for (const bad of [null, 'x', 42, {}, [], [{ urls: 5 }], { iceServers: 'x' }]) {
+      expect(parseIceServers(bad)).toBeNull();
+    }
+  });
+});
+
+describe('keepalive messages', () => {
+  it('accepts ping from the client and pong from the server', () => {
+    expect(ClientToServerSchema.safeParse({ type: 'ping' }).success).toBe(true);
+    expect(ServerToClientSchema.safeParse({ type: 'pong' }).success).toBe(true);
+  });
+});
 
 describe('AvatarIdSchema', () => {
   it('accepts 1 through 8', () => {

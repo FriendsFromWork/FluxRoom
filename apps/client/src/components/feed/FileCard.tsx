@@ -74,7 +74,7 @@ export function FileCard({ name, size, status, progress, blobUrl }: FileCardProp
 
       {failed && (
         <p className="border-t border-destructive/20 bg-destructive/5 px-3 py-1.5 text-[11px] text-destructive">
-          Sender disconnected mid-transfer.
+          Transfer interrupted — the connection was lost.
         </p>
       )}
     </div>

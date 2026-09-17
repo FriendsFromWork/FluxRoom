@@ -29,7 +29,12 @@ export type FeedItem =
     }
   | { kind: 'system'; id: string; text: string; ts: number };
 
-export type PeerStatus = 'connecting' | 'connected' | 'disconnected';
+/**
+ * - connected: direct peer-to-peer link
+ * - relayed: no direct route (e.g. different mobile networks) — traffic goes through the server
+ * - failed: no direct route and the server doesn't relay
+ */
+export type PeerStatus = 'connecting' | 'connected' | 'relayed' | 'disconnected' | 'failed';
 
 export interface RoomPeer {
   id: string;

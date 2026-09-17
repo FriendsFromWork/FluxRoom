@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, memo, Suspense } from 'react';
 import { MessageRow } from './MessageRow';
 import { TextBlock } from './TextBlock';
 import { FileCard } from './FileCard';
@@ -8,7 +8,8 @@ import type { FeedItem } from '@/types/feed';
 
 const CodeBlock = lazy(() => import('./CodeBlock').then((m) => ({ default: m.CodeBlock })));
 
-export function FeedItemView({ item, showHeader }: { item: FeedItem; showHeader: boolean }) {
+// Memoized: a file's progress updates replace only that item, so the rest of the feed skips re-rendering.
+export const FeedItemView = memo(function FeedItemView({ item, showHeader }: { item: FeedItem; showHeader: boolean }) {
   switch (item.kind) {
     case 'chat':
       return (
@@ -50,4 +51,4 @@ export function FeedItemView({ item, showHeader }: { item: FeedItem; showHeader:
     case 'system':
       return <SystemNote text={item.text} />;
   }
-}
+});

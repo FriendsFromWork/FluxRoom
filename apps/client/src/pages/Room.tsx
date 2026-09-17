@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import { LogOut, Users, X } from 'lucide-react';
@@ -14,9 +14,27 @@ import { Feed } from '@/components/feed/Feed';
 import { Composer } from '@/components/composer/Composer';
 import { useRoomStore } from '@/store/useRoomStore';
 import { cn } from '@/lib/utils';
+import { normalizeRoomCode } from '@/lib/roomCode';
+import { prefersTouchInput } from '@/lib/device';
 
 const NAME_STORAGE_KEY = 'fluxroom-name';
 const AVATAR_STORAGE_KEY = 'fluxroom-avatar';
+
+function RoomProblem({ title, message }: { title: string; message: string }) {
+  const navigate = useNavigate();
+  return (
+    <div className="flex min-h-dvh items-center justify-center bg-background px-5">
+      <div role="alert" className="w-full max-w-sm rounded-3xl border bg-card/60 p-6 text-center sm:p-8">
+        <Logo size={36} className="mx-auto" />
+        <h1 className="mt-5 font-display text-xl font-semibold">{title}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{message}</p>
+        <Button className="mt-6 w-full" onClick={() => navigate('/setup')}>
+          Back to rooms
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 function JoinPrompt({
   roomId,
@@ -29,7 +47,7 @@ function JoinPrompt({
   const [avatarId, setAvatarId] = useState(1);
 
   return (
-    <div className="relative flex min-h-svh items-center justify-center overflow-hidden bg-background px-5 py-8">
+    <div className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-background px-5 py-8">
       <div className="pointer-events-none absolute left-1/2 top-0 size-[32rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/25 glow-blob" />
 
       <motion.div
@@ -58,7 +76,7 @@ function JoinPrompt({
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && name.trim() && onJoin(name.trim(), avatarId)}
               maxLength={40}
-              autoFocus
+              autoFocus={!prefersTouchInput()}
               className="h-12 rounded-xl text-base"
             />
           </div>
@@ -83,9 +101,9 @@ function JoinPrompt({
 }
 
 export function Room() {
-  const { roomId } = useParams<{ roomId: string }>();
+  const { roomId: rawRoomId = '' } = useParams<{ roomId: string }>();
+  const roomId = normalizeRoomCode(rawRoomId);
   const navigate = useNavigate();
-  const joinedRef = useRef(false);
   const [peersOpen, setPeersOpen] = useState(false);
 
   const [name, setName] = useState(() => localStorage.getItem(NAME_STORAGE_KEY));
@@ -93,6 +111,8 @@ export function Room() {
 
   const status = useRoomStore((s) => s.status);
   const errorMessage = useRoomStore((s) => s.errorMessage);
+  const connectAttempt = useRoomStore((s) => s.connectAttempt);
+  const selfId = useRoomStore((s) => s.selfId);
   const selfName = useRoomStore((s) => s.selfName);
   const selfAvatarId = useRoomStore((s) => s.selfAvatarId);
   const peers = useRoomStore((s) => s.peers);
@@ -100,17 +120,20 @@ export function Room() {
   const joinRoom = useRoomStore((s) => s.joinRoom);
   const leaveRoom = useRoomStore((s) => s.leaveRoom);
 
+  // Canonicalize odd links (uppercase, spaces) so everyone lands in the same room.
   useEffect(() => {
-    if (!roomId || !name || joinedRef.current) return;
-    joinedRef.current = true;
-    joinRoom(name, roomId, avatarId);
-    return () => {
-      leaveRoom();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomId, name]);
+    if (roomId && roomId !== rawRoomId) navigate(`/r/${roomId}`, { replace: true });
+  }, [roomId, rawRoomId, navigate]);
 
-  if (!roomId) return null;
+  useEffect(() => {
+    if (!roomId || roomId !== rawRoomId || !name) return;
+    joinRoom(name, roomId, avatarId);
+    return () => leaveRoom();
+  }, [roomId, rawRoomId, name, avatarId, joinRoom, leaveRoom]);
+
+  if (!roomId) {
+    return <RoomProblem title="That room link isn't valid" message="Check the code and try again." />;
+  }
 
   if (!name) {
     return (
@@ -126,20 +149,26 @@ export function Room() {
     );
   }
 
-  if (status === 'connecting' || status === 'idle') {
-    return <JoiningLoader roomId={roomId} avatarId={avatarId} />;
-  }
-
   const handleLeave = () => {
     leaveRoom();
     navigate('/');
   };
 
+  if (status === 'error' && !selfId) {
+    return <RoomProblem title="Couldn't join this room" message={errorMessage ?? 'Something went wrong.'} />;
+  }
+
+  if (status === 'connecting' || status === 'idle') {
+    return <JoiningLoader roomId={roomId} avatarId={avatarId} attempt={connectAttempt} onCancel={handleLeave} />;
+  }
+
   const peerList = Object.values(peers);
-  const connectedCount = peerList.filter((p) => p.status === 'connected').length + 1;
+  const connectedCount = peerList.filter((p) => p.status === 'connected' || p.status === 'relayed').length + 1;
+  const statusLabel =
+    status === 'connected' ? `${connectedCount} connected` : status === 'reconnecting' ? 'Reconnecting…' : 'Offline';
 
   return (
-    <div className="flex h-svh flex-col overflow-hidden bg-background">
+    <div className="flex h-dvh flex-col overflow-hidden bg-background">
       <header className="z-20 flex shrink-0 items-center gap-3 border-b bg-card/50 px-4 py-3 backdrop-blur-xl sm:px-5">
         <Logo size={30} />
 
@@ -152,9 +181,7 @@ export function Room() {
                 status === 'connected' ? 'bg-emerald-400' : status === 'error' ? 'bg-red-400' : 'bg-amber-400'
               )}
             />
-            <span className="text-[11px] text-muted-foreground">
-              {status === 'connected' ? `${connectedCount} connected` : status}
-            </span>
+            <span className="text-[11px] text-muted-foreground">{statusLabel}</span>
           </div>
         </div>
 
@@ -176,8 +203,13 @@ export function Room() {
         </Button>
       </header>
 
+      {status === 'reconnecting' && (
+        <div role="status" className="shrink-0 border-b border-amber-400/30 bg-amber-400/10 px-5 py-2.5 text-sm text-amber-600 dark:text-amber-300">
+          Connection dropped — reconnecting. Messages sent now won't reach anyone until you're back.
+        </div>
+      )}
       {status === 'error' && (
-        <div className="shrink-0 border-b border-destructive/30 bg-destructive/10 px-5 py-2.5 text-sm text-destructive">
+        <div role="alert" className="shrink-0 border-b border-destructive/30 bg-destructive/10 px-5 py-2.5 text-sm text-destructive">
           {errorMessage ?? 'Connection lost.'}
         </div>
       )}

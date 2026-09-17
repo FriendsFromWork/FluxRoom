@@ -5,7 +5,6 @@ export interface Peer {
   name: string;
   avatarId: number;
   ws: WebSocket;
-  isAlive: boolean;
 }
 
 export class Room {
