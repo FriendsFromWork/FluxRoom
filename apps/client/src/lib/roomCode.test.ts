@@ -30,10 +30,10 @@ describe('normalizeRoomCode', () => {
 });
 
 describe('generateRoomCode', () => {
-  it('produces codes that are already normalized', () => {
+  it('produces a 4-digit code, zero-padded, that is already normalized', () => {
     for (let i = 0; i < 50; i++) {
       const code = generateRoomCode();
-      expect(code).toMatch(/^[a-z]+-[a-z]+-\d{2}$/);
+      expect(code).toMatch(/^\d{4}$/);
       expect(normalizeRoomCode(code)).toBe(code);
     }
   });

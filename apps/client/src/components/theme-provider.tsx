@@ -36,6 +36,9 @@ export function ThemeProvider({
         : theme;
 
     root.classList.add(resolved);
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', resolved === 'dark' ? '#0e0c15' : '#fbfaff');
   }, [theme]);
 
   const setTheme = (next: Theme) => {

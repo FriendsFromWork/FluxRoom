@@ -51,38 +51,51 @@
 }
 
 :root {
-    --background: oklch(0.99 0.005 264);
-    --foreground: oklch(0.18 0.02 264);
+    /* Light theme uses the same violet hue family as dark (≈295) so the brand reads purple in both. */
+    --background: oklch(0.985 0.006 295);
+    --foreground: oklch(0.17 0.035 290);
     --card: oklch(1 0 0);
-    --card-foreground: oklch(0.18 0.02 264);
+    --card-foreground: oklch(0.17 0.035 290);
     --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.18 0.02 264);
-    --primary: oklch(0.55 0.2 265);
-    --primary-foreground: oklch(0.99 0.005 264);
-    --secondary: oklch(0.95 0.012 264);
-    --secondary-foreground: oklch(0.25 0.03 264);
-    --muted: oklch(0.96 0.01 264);
-    --muted-foreground: oklch(0.5 0.02 264);
-    --accent: oklch(0.94 0.035 280);
-    --accent-foreground: oklch(0.25 0.03 264);
-    --destructive: oklch(0.58 0.24 27);
-    --border: oklch(0.9 0.012 264);
-    --input: oklch(0.9 0.012 264);
-    --ring: oklch(0.55 0.2 265);
-    --chart-1: oklch(0.65 0.2 265);
-    --chart-2: oklch(0.6 0.22 295);
-    --chart-3: oklch(0.7 0.15 230);
-    --chart-4: oklch(0.55 0.18 320);
-    --chart-5: oklch(0.75 0.12 200);
+    --popover-foreground: oklch(0.17 0.035 290);
+    --primary: oklch(0.52 0.23 295);
+    --primary-foreground: oklch(0.99 0.005 295);
+    --secondary: oklch(0.955 0.015 295);
+    --secondary-foreground: oklch(0.25 0.04 290);
+    --muted: oklch(0.955 0.014 295);
+    /* Secondary text: dark enough to read comfortably on near-white (≈7:1), not a washed grey. */
+    --muted-foreground: oklch(0.43 0.035 290);
+    --accent: oklch(0.94 0.035 300);
+    --accent-foreground: oklch(0.25 0.04 290);
+    --destructive: oklch(0.55 0.24 27);
+    --border: oklch(0.88 0.02 295);
+    --input: oklch(0.87 0.02 295);
+    --ring: oklch(0.52 0.23 295);
+    --chart-1: oklch(0.52 0.23 295);
+    --chart-2: oklch(0.5 0.2 270);
+    --chart-3: oklch(0.55 0.2 325);
+    --chart-4: oklch(0.6 0.2 20);
+    --chart-5: oklch(0.6 0.15 155);
     --radius: 0.75rem;
-    --sidebar: oklch(0.97 0.01 264);
-    --sidebar-foreground: oklch(0.18 0.02 264);
-    --sidebar-primary: oklch(0.55 0.2 265);
-    --sidebar-primary-foreground: oklch(0.99 0.005 264);
-    --sidebar-accent: oklch(0.94 0.035 280);
-    --sidebar-accent-foreground: oklch(0.25 0.03 264);
-    --sidebar-border: oklch(0.9 0.012 264);
-    --sidebar-ring: oklch(0.55 0.2 265);
+    --sidebar: oklch(0.975 0.01 295);
+    --sidebar-foreground: oklch(0.17 0.035 290);
+    --sidebar-primary: oklch(0.52 0.23 295);
+    --sidebar-primary-foreground: oklch(0.99 0.005 295);
+    --sidebar-accent: oklch(0.94 0.035 300);
+    --sidebar-accent-foreground: oklch(0.25 0.04 290);
+    --sidebar-border: oklch(0.88 0.02 295);
+    --sidebar-ring: oklch(0.52 0.23 295);
+
+    /* Brand gradient text needs dark stops on light backgrounds (the dark theme's pastels are ~2:1 on white). */
+    --brand-text-a: #7c3aed;
+    --brand-text-b: #4f46e5;
+    --brand-text-c: #c026d3;
+    /* Filled brand surfaces carry white text/icons — these stops keep ≥4.5:1 in both themes. */
+    --brand-fill-a: #7c3aed;
+    --brand-fill-b: #6366f1;
+    --brand-glow: 124 58 237 / 0.3;
+    /* Colored background washes read as haze on white — keep them faint in light mode. */
+    --glow-blob-opacity: 0.35;
 }
 
 .dark {
@@ -118,6 +131,14 @@
     --sidebar-accent-foreground: oklch(0.98 0.005 285);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.68 0.2 305);
+
+    --brand-text-a: #ac6aff;
+    --brand-text-b: #858dff;
+    --brand-text-c: #ff98e2;
+    --brand-fill-a: #7c3aed;
+    --brand-fill-b: #6366f1;
+    --brand-glow: 172 106 255 / 0.55;
+    --glow-blob-opacity: 1;
 }
 
 @layer base {
@@ -134,19 +155,20 @@
 
 @layer utilities {
   .text-gradient-brand {
-    background-image: linear-gradient(135deg, #ac6aff, #858dff 55%, #ff98e2);
+    background-image: linear-gradient(135deg, var(--brand-text-a), var(--brand-text-b) 55%, var(--brand-text-c));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
   .bg-gradient-brand {
-    background-image: linear-gradient(135deg, #ac6aff, #858dff);
+    background-image: linear-gradient(135deg, var(--brand-fill-a), var(--brand-fill-b));
   }
   .glow-primary {
-    box-shadow: 0 0 60px -12px rgb(172 106 255 / 0.55);
+    box-shadow: 0 0 60px -12px rgb(var(--brand-glow));
   }
   .glow-blob {
     filter: blur(90px);
+    opacity: var(--glow-blob-opacity);
   }
   .font-display {
     font-family: var(--font-display);

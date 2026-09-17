@@ -23,7 +23,7 @@ const AVATAR_STORAGE_KEY = 'fluxroom-avatar';
 function RoomProblem({ title, message }: { title: string; message: string }) {
   const navigate = useNavigate();
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-background px-5">
+    <div className="flex min-h-[var(--app-height,100dvh)] items-center justify-center bg-background px-5">
       <div role="alert" className="w-full max-w-sm rounded-3xl border bg-card/60 p-6 text-center sm:p-8">
         <Logo height={48} className="mx-auto" />
         <h1 className="mt-5 font-display text-xl font-semibold">{title}</h1>
@@ -47,7 +47,7 @@ function JoinPrompt({
   const [avatarId, setAvatarId] = useState(1);
 
   return (
-    <div className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-background px-5 py-8">
+    <div className="relative flex min-h-[var(--app-height,100dvh)] items-center justify-center overflow-hidden bg-background px-5 py-8">
       <div className="pointer-events-none absolute left-1/2 top-0 size-[32rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/25 glow-blob" />
 
       <motion.div
@@ -168,7 +168,7 @@ export function Room() {
     status === 'connected' ? `${connectedCount} connected` : status === 'reconnecting' ? 'Reconnecting…' : 'Offline';
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-background">
+    <div className="flex h-[var(--app-height,100dvh)] flex-col overflow-hidden bg-background">
       <header className="z-20 flex shrink-0 items-center gap-3 border-b bg-card/50 px-4 py-3 backdrop-blur-xl sm:px-5">
         <Logo height={38} />
 

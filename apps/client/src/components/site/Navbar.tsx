@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/Logo';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { cn } from '@/lib/utils';
 import { GITHUB_URL } from '@/lib/links';
 
@@ -16,8 +17,6 @@ function GithubIcon({ className }: { className?: string }) {
 
 const NAV_LINKS = [
   { label: 'Features', href: '#features' },
-  { label: 'How it works', href: '#how-it-works' },
-  { label: 'Privacy', href: '#privacy' },
 ];
 
 export function Navbar() {
@@ -26,19 +25,10 @@ export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => {
-      setScrolled(window.scrollY > 12);
-    };
-
+    const onScroll = () => setScrolled(window.scrollY > 12);
     onScroll();
-
-    window.addEventListener('scroll', onScroll, {
-      passive: true,
-    });
-
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   return (
@@ -51,8 +41,6 @@ export function Navbar() {
       )}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-5 xl:px-10">
-
-        {/* FluxRoom Logo */}
         <button
           type="button"
           onClick={() => navigate('/')}
@@ -60,12 +48,9 @@ export function Navbar() {
           aria-label="FluxRoom home"
         >
           <Logo height={52} className="mr-1" />
-          <span className="font-display text-lg font-semibold tracking-tight">
-            FluxRoom
-          </span>
+          <span className="font-display text-lg font-semibold tracking-tight">FluxRoom</span>
         </button>
 
-        {/* Desktop Navigation */}
         <nav className="mx-auto hidden items-center gap-1 lg:flex">
           {NAV_LINKS.map((link) => (
             <a
@@ -78,10 +63,7 @@ export function Navbar() {
           ))}
         </nav>
 
-        {/* Right Side */}
         <div className="ml-auto flex items-center gap-2 lg:ml-0">
-
-          {/* GitHub */}
           <Button
             variant="ghost"
             size="icon"
@@ -92,15 +74,12 @@ export function Navbar() {
             <GithubIcon className="size-[18px]" />
           </Button>
 
-          {/* Get Started */}
-          <Button
-            className="hidden bg-gradient-brand glow-primary sm:flex"
-            onClick={() => navigate('/setup')}
-          >
+          <ThemeToggle />
+
+          <Button className="hidden bg-gradient-brand glow-primary sm:flex" onClick={() => navigate('/setup')}>
             Get Started
           </Button>
 
-          {/* Mobile Menu */}
           <Button
             variant="ghost"
             size="icon"
@@ -108,16 +87,11 @@ export function Navbar() {
             aria-label="Toggle menu"
             onClick={() => setMenuOpen((v) => !v)}
           >
-            {menuOpen ? (
-              <X className="size-[18px]" />
-            ) : (
-              <Menu className="size-[18px]" />
-            )}
+            {menuOpen ? <X className="size-[18px]" /> : <Menu className="size-[18px]" />}
           </Button>
         </div>
       </div>
 
-      {/* Mobile Navigation */}
       {menuOpen && (
         <nav className="flex flex-col border-t bg-background/95 px-5 py-2 backdrop-blur-xl lg:hidden">
           {NAV_LINKS.map((link) => (
@@ -130,11 +104,7 @@ export function Navbar() {
               {link.label}
             </a>
           ))}
-
-          <Button
-            className="my-3 bg-gradient-brand sm:hidden"
-            onClick={() => navigate('/setup')}
-          >
+          <Button className="my-3 bg-gradient-brand sm:hidden" onClick={() => navigate('/setup')}>
             Get Started
           </Button>
         </nav>
