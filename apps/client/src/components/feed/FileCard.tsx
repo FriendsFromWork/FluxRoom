@@ -21,7 +21,7 @@ export function FileCard({ name, size, status, progress, blobUrl }: FileCardProp
   return (
     <div
       className={cn(
-        'w-64 overflow-hidden rounded-2xl border bg-card sm:w-72',
+        'w-full max-w-64 overflow-hidden rounded-2xl border bg-card sm:max-w-72',
         failed && 'border-destructive/40'
       )}
     >

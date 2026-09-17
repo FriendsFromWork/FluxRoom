@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import CodeMirror from '@uiw/react-codemirror';
 import { EditorView } from '@codemirror/view';
 import { oneDark } from '@codemirror/theme-one-dark';
@@ -6,6 +7,7 @@ import { Check, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getLanguageExtension } from '@/lib/codeLanguages';
 import { useResolvedTheme } from '@/hooks/useResolvedTheme';
+import { copyToClipboard } from '@/lib/clipboard';
 
 interface CodeBlockProps {
   lang: string;
@@ -17,7 +19,11 @@ export function CodeBlock({ lang, content }: CodeBlockProps) {
   const resolvedTheme = useResolvedTheme();
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(content);
+    const ok = await copyToClipboard(content);
+    if (!ok) {
+      toast.error('Could not copy — try selecting the code manually.');
+      return;
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };

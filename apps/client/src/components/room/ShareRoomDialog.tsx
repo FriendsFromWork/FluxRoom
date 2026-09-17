@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { QRCodeSVG } from 'qrcode.react';
 import { Check, Copy, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { copyToClipboard } from '@/lib/clipboard';
 import {
   Dialog,
   DialogContent,
@@ -15,20 +17,33 @@ import {
 export function ShareRoomDialog({ roomName }: { roomName: string }) {
   const [copied, setCopied] = useState(false);
   const link = `${window.location.origin}/r/${roomName}`;
+  const canNativeShare = typeof navigator !== 'undefined' && !!navigator.share;
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(link);
+    const ok = await copyToClipboard(link);
+    if (!ok) {
+      toast.error('Could not copy — try selecting the link manually.');
+      return;
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
+  };
+
+  const handleNativeShare = async () => {
+    try {
+      await navigator.share({ title: `Join ${roomName} on FluxRoom`, url: link });
+    } catch {
+      // user cancelled the native share sheet, or it's unsupported — no-op
+    }
   };
 
   return (
     <Dialog>
       <DialogTrigger
         render={
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" aria-label="Share room">
             <Share2 className="size-4" />
-            Share
+            <span className="hidden sm:inline">Share</span>
           </Button>
         }
       />
@@ -49,6 +64,13 @@ export function ShareRoomDialog({ roomName }: { roomName: string }) {
               {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
             </Button>
           </div>
+
+          {canNativeShare && (
+            <Button variant="secondary" className="w-full" onClick={handleNativeShare}>
+              <Share2 className="size-4" />
+              Share via…
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>

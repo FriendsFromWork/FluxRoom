@@ -6,6 +6,8 @@ import type { FeedItem } from '@/types/feed';
 import { Logo } from '@/components/Logo';
 
 const GROUP_WINDOW_MS = 5 * 60 * 1000;
+/** How close to the bottom (in px) counts as "still at the bottom" for auto-scroll purposes. */
+const AUTO_SCROLL_THRESHOLD_PX = 120;
 
 function hasSender(item: FeedItem): item is Extract<FeedItem, { from: string }> {
   return item.kind !== 'system';
@@ -19,10 +21,26 @@ function shouldGroupWithPrevious(prev: FeedItem | undefined, curr: FeedItem): bo
 
 export function Feed({ items }: { items: FeedItem[] }) {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const wasNearBottomRef = useRef(true);
 
   useEffect(() => {
+    // Skip the jump if the user has scrolled up to read earlier messages —
+    // only follow the feed automatically while already parked near the bottom.
+    if (!wasNearBottomRef.current) return;
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [items.length]);
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    const onScroll = () => {
+      const distanceFromBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
+      wasNearBottomRef.current = distanceFromBottom <= AUTO_SCROLL_THRESHOLD_PX;
+    };
+    viewport.addEventListener('scroll', onScroll, { passive: true });
+    return () => viewport.removeEventListener('scroll', onScroll);
+  }, []);
 
   if (items.length === 0) {
     return (
@@ -42,7 +60,7 @@ export function Feed({ items }: { items: FeedItem[] }) {
   }
 
   return (
-    <ScrollArea className="flex-1">
+    <ScrollArea className="flex-1" viewportRef={viewportRef}>
       <div className="mx-auto flex max-w-3xl flex-col px-4 py-5 sm:px-6">
         <AnimatePresence initial={false}>
           {items.map((item, index) => (

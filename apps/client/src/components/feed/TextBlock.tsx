@@ -1,12 +1,18 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { Check, Copy, AlignLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { copyToClipboard } from '@/lib/clipboard';
 
 export function TextBlock({ content }: { content: string }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(content);
+    const ok = await copyToClipboard(content);
+    if (!ok) {
+      toast.error('Could not copy — try selecting the text manually.');
+      return;
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
