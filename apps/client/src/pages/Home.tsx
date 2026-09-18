@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { ArrowRight, ShieldCheck, Zap, Users, Link2, MonitorSmartphone } from 'lucide-react';
+import { ArrowRight, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/Logo';
 import { Navbar } from '@/components/site/Navbar';
@@ -8,12 +8,6 @@ import { Reveal } from '@/components/site/Reveal';
 import { TransferOrbit } from '@/components/site/TransferOrbit';
 import { FeatureTabs } from '@/components/site/FeatureTabs';
 import { ScrollZoom } from '@/components/site/ScrollZoom';
-
-const STEPS = [
-  { icon: Users, label: 'Pick a name' },
-  { icon: Link2, label: 'Share the room' },
-  { icon: Zap, label: 'Start sharing' },
-];
 
 export function Home() {
   const navigate = useNavigate();
